@@ -10,6 +10,8 @@ function ClipEditor() {
   const [selectedRegion, setSelectedRegion] = useState<{ start: number; end: number } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [zoomLevel, setZoomLevel] = useState(50)
+
   
   useEffect(() => {
     if (waveformRef.current && audioName) {
@@ -166,6 +168,32 @@ function ClipEditor() {
     const seconds = Math.floor(time % 60)
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
   }
+
+  const handleZoomIn = () => {
+    if (wavesurferRef.current) {
+      const newZoom = zoomLevel + 20
+      wavesurferRef.current.zoom(newZoom)
+      setZoomLevel(newZoom)
+    }
+  }
+  
+  const handleZoomOut = () => {
+    if (wavesurferRef.current) {
+      const newZoom = Math.max(10, zoomLevel - 20) // 最小10まで！
+      wavesurferRef.current.zoom(newZoom)
+      setZoomLevel(newZoom)
+    }
+  }
+  
+  const buttonStyle = {
+    padding: '8px 16px',
+    backgroundColor: '#2196f3',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
+  }
   
   return (
     <div className="clip-editor" style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
@@ -252,6 +280,12 @@ function ClipEditor() {
               <strong>Duration:</strong> {formatTime(selectedRegion.end - selectedRegion.start)}
             </div>
           </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '15px' }}>
+            <button onClick={handleZoomIn} style={buttonStyle}>Zoom In</button>
+            <button onClick={handleZoomOut} style={buttonStyle}>Zoom Out</button>
+          </div>
+
           
           <button
             onClick={handleSubmitClip}
