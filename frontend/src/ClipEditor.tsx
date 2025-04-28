@@ -114,10 +114,20 @@ function ClipEditor() {
     }
   }
   
+  // const handlePlayRegion = () => {
+  //   if (wavesurferRef.current && selectedRegion) {
+  //     // Play the selected region
+  //     wavesurferRef.current.play(selectedRegion.start, selectedRegion.end)
+  //   }
+  // }
+  
   const handlePlayRegion = () => {
     if (wavesurferRef.current && selectedRegion) {
-      // Play the selected region
-      wavesurferRef.current.play(selectedRegion.start, selectedRegion.end)
+      const regionsPlugin = wavesurferRef.current!.getActivePlugins()[0] as any
+      const region = Object.values(regionsPlugin.getRegions())[0] as any
+      if (region) {
+        region.play()
+      }
     }
   }
   
