@@ -1,22 +1,49 @@
-import { useEffect, useState} from 'react'
-import './App.css'
+// src/App.tsx
 
-function App(){
-  const [ message, setMessage] = useState<string>('Loading...');
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import AudioList from './AudioList'
+import ClipEditor from './ClipEditor' 
 
-  useEffect(()=>{
-    fetch('http://localhost:5003/api/hello')
-    .then(response => response.json())
-    .then((data: {message: string}) => setMessage(data.message))
-    .catch(error => setMessage('Error: '+ error.message))
-  }, [])
-
+function App() {
   return (
-    <div>
-      <h1>{message}</h1>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<AudioList />} />
+        <Route path="/clip/:audioName" element={<ClipEditor />} />
+      </Routes>
+    </Router>
   )
-} // end of function
+}
 
 export default App
+
+
+// import { useEffect, useState} from 'react'
+// import './App.css'
+
+//   function AudioList() {
+//     const [audios, setAudios] = useState<string[]>([])
+
+//   useEffect(()=>{
+//     fetch('http://localhost:5003/api/audios')
+//     .then(response => response.json())
+//     .then(data => setAudios(data))
+//     .catch(err => console.error(err))
+//   }, [])
+
+//   return (
+//     <div>
+//       <h1>Choose an Audio</h1>
+//       <ul>
+//         {audios.map((audio, index) => (
+//           <li key={index}>
+//             {audio}
+//           </li>
+//         ))}
+//       </ul>
+//     </div>
+//   )
+// } // end of function
+
+// export default AudioList
 
