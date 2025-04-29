@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import WaveSurfer from 'wavesurfer.js'
 import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js'
+import { useNavigate } from 'react-router-dom'
 
 function ClipEditor() {
   const { audioName } = useParams<{ audioName: string }>()
@@ -11,7 +12,10 @@ function ClipEditor() {
   const [isLoading, setIsLoading] = useState(true)
   const [isPlaying, setIsPlaying] = useState(false)
   const [zoomLevel, setZoomLevel] = useState(50)
-
+  const navigate = useNavigate()
+  
+  // Store the active region reference
+  const activeRegionRef = useRef<any>(null)
   
   useEffect(() => {
     if (waveformRef.current && audioName) {
@@ -25,10 +29,9 @@ function ClipEditor() {
         cursorColor: '#333',
         height: 200,
         barWidth: 2,
-        // responsive: true,
         normalize: true,
         fillParent: true,
-        minPxPerSec: 100, // Ensure waveform is stretched enough
+        minPxPerSec: 100,
       })
       
       // Load audio file
@@ -39,10 +42,10 @@ function ClipEditor() {
         RegionsPlugin.create({
           regions: [],
           dragSelection: {
-            slop: 5, // Pixel threshold before drag selection begins
+            slop: 5,
           },
-          color: 'rgba(33, 150, 243, 0.3)', // Make region more visible
-        }as any)
+          color: 'rgba(33, 150, 243, 0.3)',
+        } as any)
       )
       
       // Event listeners
@@ -50,7 +53,7 @@ function ClipEditor() {
         setIsLoading(false)
         console.log('WaveSurfer is ready')
         
-        // Create an initial default region (optional)
+        // Create an initial default region
         const duration = wavesurfer.getDuration()
         if (duration) {
           const initialRegion = regionsPlugin.addRegion({
@@ -60,9 +63,23 @@ function ClipEditor() {
             drag: true,
             resize: true,
           })
+          
+          // Store the active region reference
+          activeRegionRef.current = initialRegion
+          
+          // Set the initial region state
           setSelectedRegion({ 
             start: initialRegion.start, 
             end: initialRegion.end 
+          })
+          
+          // Add direct event listeners to this region
+          initialRegion.on('update-end', () => {
+            console.log('Region update end:', initialRegion.start, initialRegion.end)
+            setSelectedRegion({
+              start: initialRegion.start,
+              end: initialRegion.end
+            })
           })
         }
       })
@@ -70,7 +87,7 @@ function ClipEditor() {
       wavesurfer.on('play', () => setIsPlaying(true))
       wavesurfer.on('pause', () => setIsPlaying(false))
       
-      // Region events
+      // Global region events
       wavesurfer.on('region-created' as any, (region: any) => {
         console.log('Region created:', region)
         
@@ -84,14 +101,29 @@ function ClipEditor() {
           })
         }
         
+        // Store the active region reference
+        activeRegionRef.current = region
+        
+        // Set the initial region state
         setSelectedRegion({ 
           start: region.start, 
           end: region.end 
         })
+        
+        // Add direct event listeners to this region
+        region.on('update-end', () => {
+          console.log('Region update end:', region.start, region.end)
+          setSelectedRegion({
+            start: region.start,
+            end: region.end
+          })
+        })
       })
       
+      // This event is triggered during dragging, but not always at the end
       wavesurfer.on('region-updated' as any, (region: any) => {
-        console.log('Region updated:', region)
+        console.log('Region updated:', region.start, region.end)
+        // We'll update the UI during dragging, but the final value will be set by update-end
         setSelectedRegion({ 
           start: region.start, 
           end: region.end 
@@ -116,49 +148,10 @@ function ClipEditor() {
     }
   }
   
-  // const handlePlayRegion = () => {
-  //   if (wavesurferRef.current && selectedRegion) {
-  //     // Play the selected region
-  //     wavesurferRef.current.play(selectedRegion.start, selectedRegion.end)
-  //   }
-  // }
-  
   const handlePlayRegion = () => {
-    if (wavesurferRef.current && selectedRegion) {
-      const regionsPlugin = wavesurferRef.current!.getActivePlugins()[0] as any
-      const region = Object.values(regionsPlugin.getRegions())[0] as any
-      if (region) {
-        region.play()
-      }
-    }
-  }
-  
-  const handleSubmitClip = async () => {
-    if (!selectedRegion || !audioName) return
-    
-    try {
-      const response = await fetch('http://localhost:5003/api/clip', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          audioName,
-          start: selectedRegion.start,
-          end: selectedRegion.end,
-        }),
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to create clip')
-      }
-      
-      const data = await response.json()
-      console.log('Clip created:', data)
-      alert('Clip created successfully!')
-    } catch (error) {
-      console.error('Error creating clip:', error)
-      alert('Failed to create clip. Please try again.')
+    if (wavesurferRef.current && selectedRegion && activeRegionRef.current) {
+      // Use the active region reference to play
+      activeRegionRef.current.play()
     }
   }
   
@@ -179,7 +172,7 @@ function ClipEditor() {
   
   const handleZoomOut = () => {
     if (wavesurferRef.current) {
-      const newZoom = Math.max(10, zoomLevel - 20) // 最小10まで！
+      const newZoom = Math.max(10, zoomLevel - 20)
       wavesurferRef.current.zoom(newZoom)
       setZoomLevel(newZoom)
     }
@@ -194,9 +187,49 @@ function ClipEditor() {
     cursor: 'pointer',
     fontSize: '14px',
   }
+
+  const handleSubmitClip = async () => {
+    // Debug output
+    console.log("Submitting clip with region:", selectedRegion);
+    console.log("Active region reference:", activeRegionRef.current);
+    
+    if (!selectedRegion || !audioName) {
+      console.error("Missing selectedRegion or audioName");
+      return;
+    }
+  
+    try {
+      const response = await fetch('http://localhost:5003/api/clip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          audioName,
+          start: selectedRegion.start,
+          end: selectedRegion.end,
+        }),
+      })
+  
+      if (!response.ok) throw new Error('Clip creation failed')
+  
+      const data = await response.json()
+      console.log('Clip created successfully! Data:', data)
+
+      // Success => going to mock payment page
+      navigate(`/payment?clipFilename=${data.clipFilename}`)
+    } catch (error) {
+      console.error('Error creating clip:', error)
+    }
+  }
   
   return (
-    <div className="clip-editor" style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+    <div className="clip-editor" style={{ 
+      maxWidth: '800px', 
+      margin: '0 auto', 
+      padding: '20px',
+      backgroundColor: '#1e1e1e',
+      color: '#e0e0e0',
+      borderRadius: '8px'
+    }}>
       <h1 style={{ marginBottom: '20px', fontSize: '24px', fontWeight: 'bold' }}>Audio Clip Editor</h1>
       <p style={{ marginBottom: '10px' }}>Selected Audio: {audioName}</p>
       
@@ -208,11 +241,11 @@ function ClipEditor() {
       
       <div 
         style={{ 
-          border: '1px solid #ddd', 
+          border: '1px solid #333', 
           borderRadius: '8px', 
           padding: '15px', 
           marginBottom: '20px',
-          backgroundColor: '#f9f9f9'
+          backgroundColor: '#2a2a2a'
         }}
       >
         <div ref={waveformRef} style={{ width: '100%', height: '200px' }} />
@@ -263,10 +296,10 @@ function ClipEditor() {
       
       {selectedRegion && (
         <div style={{ 
-          backgroundColor: '#e3f2fd', 
+          backgroundColor: '#2a2a2a', 
           padding: '15px', 
           borderRadius: '8px',
-          marginBottom: '20px'
+          marginBottom: '20px',
         }}>
           <h3 style={{ marginBottom: '10px', fontSize: '18px', fontWeight: 'bold' }}>Selected Region</h3>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
@@ -300,7 +333,8 @@ function ClipEditor() {
               fontWeight: 'bold',
               display: 'block',
               width: '100%',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              marginTop: '15px'
             }}
           >
             Create Clip from Selected Region
@@ -308,7 +342,7 @@ function ClipEditor() {
         </div>
       )}
       
-      <div style={{ fontSize: '14px', color: '#666', marginTop: '20px' }}>
+      <div style={{ fontSize: '14px', color: '#999', marginTop: '20px' }}>
         <p><strong>Instructions:</strong> Click and drag on the waveform to select a region. 
         Use the buttons to play the full audio or just your selection. 
         When you're happy with your selection, click the green button to create your clip.</p>

@@ -24,7 +24,12 @@ def get_audio_list():
 # User can see audio form
 @app.route("/static/<path:filename>", methods=["GET"])
 def serve_audio(filename):
-    return send_from_directory(AUDIO_FOLDER, filename)
+    return send_from_directory(
+        AUDIO_FOLDER,
+        filename,
+        as_attachment=True  # Specify download direction
+    )
+
 
 # User can clip audio with selected region
 @app.route("/api/clip", methods=["POST"])

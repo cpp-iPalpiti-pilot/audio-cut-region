@@ -3,6 +3,9 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import AudioList from './AudioList'
 import ClipEditor from './ClipEditor' 
+import MockPayment from './MockPayment'
+
+
 
 function App() {
   return (
@@ -10,6 +13,7 @@ function App() {
       <Routes>
         <Route path="/" element={<AudioList />} />
         <Route path="/clip/:audioName" element={<ClipEditor />} />
+        <Route path="/payment" element={<MockPayment />} />
       </Routes>
     </Router>
   )
