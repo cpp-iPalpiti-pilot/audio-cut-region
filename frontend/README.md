@@ -1,54 +1,117 @@
-# React + TypeScript + Vite
+# 🎧 Audio Clip Demo App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A minimal full-stack application for selecting, clipping, and downloading audio tracks with a streamlined user experience.
 
-Currently, two official plugins are available:
+![App Demo](assets/demo.gif)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## ✨ Features
 
-## Expanding the ESLint configuration
+- Browse available audio tracks
+- Visualize audio waveforms
+- Select specific regions with precise timing
+- Zoom in/out for detailed editing
+- Create and download custom audio clips
+- Simulated payment process
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 📝 Case Study Example
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+1. User logs in and views the music list
+2. User selects a music track for their project
+3. User interacts with the waveform visualization:
+   - Listens to the track
+   - Zooms in/out for precise selection
+   - Selects the exact region needed
+4. User clicks "Create Clip" and proceeds to payment
+5. After simulated payment, the download link activates
+6. User downloads the clip to their local machine
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Docker and Docker Compose
+- Node.js (v14+) and npm
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd audio-cut-region
+   ```
+
+2. **Install frontend dependencies**
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+3. **Start backend services**
+   ```bash
+   # From project root
+   docker compose up --build
+   ```
+   The Flask backend will start on `http://localhost:5003`
+
+4. **Start frontend development server**
+   ```bash
+   # In the frontend directory
+   npm run dev
+   ```
+   The frontend will be available at `http://localhost:5173`
+
+## 🧩 How It Works
+
+1. **Browse & Select** - Choose from available audio tracks
+2. **Edit & Preview** - Use the waveform editor to select your desired clip
+3. **Purchase** - Go through a simulated payment process
+4. **Download** - Get your custom audio clip
+
+## 🛠️ Tech Stack
+
+| Component | Technology |
+|-----------|------------|
+| Frontend | React + TypeScript + Vite |
+| Backend | Flask (Python) |
+| Audio Processing | pydub + ffmpeg |
+| Waveform Visualization | WaveSurfer.js |
+| Containerization | Docker + Docker Compose |
+
+## 📁 Project Structure
+
+```
+audio-cut-region/
+├── backend/               # Flask server & audio processing
+│   ├── app.py             # Main server application
+│   ├── Dockerfile         # Backend container configuration
+│   ├── requirements.txt   # Python dependencies
+│   └── audios/            # Sample audio files
+├── frontend/              # React application
+│   ├── src/               # Source code
+│   │   ├── components/    # React components
+│   │   ├── pages/         # Page components
+│   │   └── App.tsx        # Main application component
+│   ├── public/            # Static assets
+│   └── package.json       # Frontend dependencies
+├── assets/                # Project assets
+│   └── demo.gif           # Application demo
+├── docker-compose.yml     # Multi-container configuration
+└── README.md              # Project documentation
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 💡 Development Notes
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- No database is used; audio files are stored in the `audios/` directory
+- The application uses temporary file storage for processed clips
+- Users manually choose where to save downloaded clips
+- The project is designed for demonstration and MVP proof-of-concept purposes
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+## 🧠 Key Implementation Concepts (Hands on Practice mateiral for me)
+
+- **Docker Multi-Container Setup** - Separate services for frontend and backend
+- **WaveSurfer.js Integration** - Advanced audio visualization and region editing
+- **Audio Processing Pipeline** - Server-side audio manipulation with pydub/ffmpeg
+- **REST API Communication** - Clean interface between frontend and backend
+- **React Hooks for State Management** - Modern approach to frontend state
+- **File Download Implementation** - Browser-based file handling techniques
+
